@@ -77,43 +77,7 @@ do
 end
 
 ------------------------------------------------------------------------
--- B64 Helpers for Config Share (EXACT same as Hutao)
-------------------------------------------------------------------------
-local B64CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
-
-local function b64Encode(str)
-    local result = {}
-    local bytes = {string.byte(str, 1, #str)}
-    for i = 1, #bytes, 3 do
-        local b1, b2, b3 = bytes[i] or 0, bytes[i+1] or 0, bytes[i+2] or 0
-        local n = b1 * 65536 + b2 * 256 + b3
-        result[#result+1] = B64CHARS:sub(math.floor(n/262144)%64+1, math.floor(n/262144)%64+1)
-        result[#result+1] = B64CHARS:sub(math.floor(n/4096)%64+1, math.floor(n/4096)%64+1)
-        result[#result+1] = bytes[i+1] and B64CHARS:sub(math.floor(n/64)%64+1, math.floor(n/64)%64+1) or "="
-        result[#result+1] = bytes[i+2] and B64CHARS:sub(n%64+1, n%64+1) or "="
-    end
-    return table.concat(result)
-end
-
-local function b64Decode(str)
-    local lookup = {}
-    for i = 1, #B64CHARS do lookup[B64CHARS:sub(i,i)] = i-1 end
-    local bytes = {}
-    for i = 1, #str, 4 do
-        local c1 = lookup[str:sub(i,i)] or 0
-        local c2 = lookup[str:sub(i+1,i+1)] or 0
-        local c3 = lookup[str:sub(i+2,i+2)]
-        local c4 = lookup[str:sub(i+3,i+3)]
-        local n = c1*262144 + c2*4096 + (c3 or 0)*64 + (c4 or 0)
-        bytes[#bytes+1] = string.char(math.floor(n/65536)%256)
-        if c3 then bytes[#bytes+1] = string.char(math.floor(n/256)%256) end
-        if c4 then bytes[#bytes+1] = string.char(n%256) end
-    end
-    return table.concat(bytes)
-end
-
-------------------------------------------------------------------------
--- WindUI  <- CACHED TO DISK so second+ loads are instant
+-- WindUI
 ------------------------------------------------------------------------
 local WIND_DIR  = "Viperware"
 local WIND_FILE = WIND_DIR .. "/WindUI.lua"
@@ -167,7 +131,7 @@ win:EditOpenButton({
     Draggable  = true,
 })
 
--- EXACT same as Hutao - ConfigManager
+-- ConfigManager (EXACT same as Hutao)
 local ConfigManager = win.ConfigManager
 local viperConfig = ConfigManager:CreateConfig("viperware-forsaken")
 
@@ -196,7 +160,7 @@ local function getNetwork()
 end
 
 ------------------------------------------------------------------------
--- TAB: SETTINGS (with Flags like Hutao)
+-- TAB: SETTINGS (with Flags)
 ------------------------------------------------------------------------
 local tabSettings = win:Tab({ Title = "Setting", Icon = "settings" })
 local secInterface = tabSettings:Section({ Title = "Interface", Opened = true })
@@ -347,7 +311,7 @@ secPlatform:Dropdown({
 lp.CharacterAdded:Connect(function() task.delay(1, function() if platEnabled then platPush() end end) end)
 
 ------------------------------------------------------------------------
--- TAB: GLOBAL (with Flags like Hutao)
+-- TAB: GLOBAL (with Flags)
 ------------------------------------------------------------------------
 local tabGlobal  = win:Tab({ Title = "Global", Icon = "globe" })
 local secStamina = tabGlobal:Section({ Title = "Stamina", Opened = true })
@@ -521,7 +485,7 @@ lp.CharacterAdded:Connect(function()
 end)
 
 ------------------------------------------------------------------------
--- HITBOX (with Flags like Hutao)
+-- HITBOX (with Flags)
 ------------------------------------------------------------------------
 local secHitbox = tabGlobal:Section({ Title = "Hitbox", Opened = true })
 local hb = { on = false, strength = 50, conn = nil, active = {} }
@@ -605,7 +569,7 @@ end)
 lp.CharacterRemoving:Connect(function() for k in pairs(hb.active) do hb.active[k] = nil end end)
 
 ------------------------------------------------------------------------
--- AUTO COLLISION (with Flags like Hutao)
+-- AUTO COLLISION (with Flags)
 ------------------------------------------------------------------------
 local ac = {
     on         = false,
@@ -830,7 +794,7 @@ secAutoCollision:Slider({
 })
 
 ------------------------------------------------------------------------
--- TAB: GENERATOR (with Flags like Hutao)
+-- TAB: GENERATOR (with Flags)
 ------------------------------------------------------------------------
 local tabGen     = win:Tab({ Title = "Generator", Icon = "circuit-board" })
 local secGenAuto = tabGen:Section({ Title = "Auto Solve", Opened = true })
@@ -935,7 +899,7 @@ secGenAuto:Slider({
 })
 
 ------------------------------------------------------------------------
--- TAB: KILLER (with Flags like Hutao)
+-- TAB: KILLER (with Flags)
 ------------------------------------------------------------------------
 local tabKiller = win:Tab({ Title = "Killer", Icon = "crosshair" })
 
@@ -1240,7 +1204,7 @@ secKillerAbilities:Toggle({
 })
 
 ------------------------------------------------------------------------
--- TAB: VISUAL (with Flags like Hutao)
+-- TAB: VISUAL (with Flags)
 ------------------------------------------------------------------------
 local tabVisual = win:Tab({ Title = "Visual", Icon = "eye" })
 local secDisplay = tabVisual:Section({ Title = "Entity Tracking", Opened = true })
@@ -1468,7 +1432,7 @@ secDisplay:Toggle({
 })
 
 ------------------------------------------------------------------------
--- Minion + Puddle ESP (with Flags like Hutao)
+-- Minion + Puddle ESP (with Flags)
 ------------------------------------------------------------------------
 local secMinion = tabVisual:Section({ Title = "Minion & Ability ESP", Opened = true })
 local mset = { pizza=false, zombie=false, puddle=false, transparency=0.25 }
@@ -1600,7 +1564,7 @@ secMinion:Slider({
 secMinion:Button({ Title="🔄 Force Rescan", Callback=function() clearTag("pizza"); clearTag("zombie"); clearTag("puddle"); task.wait(0.1); scanPizza(); scanZombie(); scanPuddles() end })
 
 ------------------------------------------------------------------------
--- BLOODSTAINS (with Flags like Hutao)
+-- BLOODSTAINS (with Flags)
 ------------------------------------------------------------------------
 local secBloodstain = tabVisual:Section({ Title = "Damage Feedback", Opened = true })
 local bloodstain = {
@@ -1762,7 +1726,7 @@ lp.CharacterAdded:Connect(function()
 end)
 
 ------------------------------------------------------------------------
--- TAB: MUSIC (with Flags like Hutao)
+-- TAB: MUSIC (with Flags)
 ------------------------------------------------------------------------
 local tabMusic = win:Tab({ Title = "Music", Icon = "music" })
 local secLMS   = tabMusic:Section({ Title = "LMS Music", Opened = true })
@@ -2002,7 +1966,7 @@ secSupports:Button({ Title="Dusekkar", Callback=function() loadstring(game:HttpG
 secSupports:Button({ Title="Elliot",   Callback=function() loadstring(game:HttpGet("https://pastebin.com/raw/cD2nYPxE"))() end })
 
 ------------------------------------------------------------------------
--- TAB: INTERFACE (with Config Share - EXACT HUTAO METHOD)
+-- TAB: INTERFACE (with Config Share - ULTRA COMPACT)
 ------------------------------------------------------------------------
 local tabInterface   = win:Tab({ Title = "Interface", Icon = "scan" })
 local secUIFunctions = tabInterface:Section({ Title = "UI Functions", Opened = true })
@@ -2012,141 +1976,260 @@ secUIFunctions:Button({ Title = "Close UI", Callback = function()
 end })
 
 ------------------------------------------------------------------------
--- COMPRESSED CONFIG SHARE SECTION (SMALLER FOR DISCORD)
+-- ULTRA-COMPACT CONFIG SHARE (TINY STRINGS FOR DISCORD - ~20-30 chars)
 ------------------------------------------------------------------------
 local secConfigShare = tabInterface:Section({ Title = "Config Share", Opened = true })
 
 local CONFIG_PATH = "Viperware/config.json"
 
--- LZ-String compression (compact base64 with compression)
-local LZ = {}
+-- Map feature names to single characters
+local FEATURE_MAP = {
+    spoofActive = "A", chatForceEnabled = "B", platEnabled = "C", platDevice = "D", timerSide = "E",
+    stamOn = "F", stamLoss = "G", stamGain = "H", stamMax = "I", stamCurrent = "J", stamNoLoss = "K",
+    hbOn = "L", hbStrength = "M",
+    acOn = "N", acStrength = "O", acMaxDist = "P",
+    flowOn = "Q", flowNodeDelay = "R", flowLineDelay = "S",
+    aimOn = "T", aimCooldown = "U", aimLockTime = "V", aimMaxDist = "W", aimSmooth = "X",
+    absOn = "Y", absRange = "Z", absDur = "a",
+    sixerStrafeOn = "b", coolkidWSOOn = "c", noliVoidRushOn = "d",
+    displayKillers = "e", displaySurvivors = "f", displayGenerators = "g", displayItems = "h", displayBuildings = "i",
+    espPizza = "j", espZombie = "k", espPuddle = "l", espMinionTrans = "m",
+    bloodOn = "n", bloodIntensity = "o", bloodDistance = "p",
+    musicOn = "q", musicSel = "r",
+}
 
--- Simple Huffman-inspired compression using Base64 + Run Length Encoding
-function LZ.compress(input)
-    if not input or input == "" then return "" end
-    
-    -- First, try to use game's HttpService compression if available
-    local ok, compressed = pcall(function()
-        return game:GetService("HttpService"):JSONEncode({
-            d = input:gsub("\"", "\\\""):gsub("\n", "\\n")
-        })
-    end)
-    
-    -- Use Run-Length Encoding for repeated patterns
-    local function rleCompress(str)
-        local result = {}
-        local i = 1
-        while i <= #str do
-            local char = str:sub(i, i)
-            local count = 1
-            while i + count <= #str and str:sub(i + count, i + count) == char and count < 255 do
-                count = count + 1
-            end
-            if count > 2 then
-                result[#result + 1] = "~" .. string.char(count) .. char
+-- Reverse map for decoding
+local REVERSE_MAP = {}
+for k, v in pairs(FEATURE_MAP) do REVERSE_MAP[v] = k end
+
+-- Default values for type detection
+local DEFAULTS = {
+    spoofActive = false, chatForceEnabled = false, platEnabled = false, platDevice = "Console", timerSide = "Middle",
+    stamOn = false, stamLoss = 10, stamGain = 20, stamMax = 100, stamCurrent = 100, stamNoLoss = false,
+    hbOn = false, hbStrength = 50,
+    acOn = false, acStrength = 50, acMaxDist = 100,
+    flowOn = false, flowNodeDelay = 0.04, flowLineDelay = 0.60,
+    aimOn = false, aimCooldown = 0.3, aimLockTime = 0.4, aimMaxDist = 30, aimSmooth = 0.35,
+    absOn = false, absRange = 40, absDur = 1.5,
+    sixerStrafeOn = false, coolkidWSOOn = false, noliVoidRushOn = false,
+    displayKillers = false, displaySurvivors = false, displayGenerators = false, displayItems = false, displayBuildings = false,
+    espPizza = false, espZombie = false, espPuddle = false, espMinionTrans = 0.25,
+    bloodOn = false, bloodIntensity = 0.6, bloodDistance = 100,
+    musicOn = false, musicSel = "CondemnedLMS",
+}
+
+-- Compress config to tiny string
+function compressConfig(data)
+    local parts = {}
+    for k, v in pairs(data) do
+        local keyChar = FEATURE_MAP[k]
+        if keyChar then
+            local valStr
+            if type(v) == "boolean" then
+                valStr = v and "1" or "0"
+            elseif type(v) == "number" then
+                valStr = string.format("%.2f", v):gsub("%.?0+$", "")
+                if valStr == "" then valStr = "0" end
             else
-                for j = 1, count do
-                    result[#result + 1] = char
-                end
+                valStr = tostring(v)
             end
-            i = i + count
+            parts[#parts + 1] = keyChar .. valStr
         end
-        return table.concat(result)
     end
-    
-    -- Apply RLE first
-    local rle = rleCompress(input)
-    
-    -- Convert to base64 with custom alphabet (URL-safe)
-    local function toBase64(data)
-        local b64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
-        local result = {}
-        local bytes = {string.byte(data, 1, #data)}
-        for i = 1, #bytes, 3 do
-            local b1, b2, b3 = bytes[i] or 0, bytes[i+1] or 0, bytes[i+2] or 0
-            local n = b1 * 65536 + b2 * 256 + b3
-            result[#result+1] = b64:sub(math.floor(n/262144)%64+1, math.floor(n/262144)%64+1)
-            result[#result+1] = b64:sub(math.floor(n/4096)%64+1, math.floor(n/4096)%64+1)
-            result[#result+1] = bytes[i+1] and b64:sub(math.floor(n/64)%64+1, math.floor(n/64)%64+1) or "="
-            result[#result+1] = bytes[i+2] and b64:sub(n%64+1, n%64+1) or "="
-        end
-        return table.concat(result)
-    end
-    
-    local compressed = toBase64(rle)
-    return compressed
+    return table.concat(parts, ",")
 end
 
-function LZ.decompress(compressed)
-    if not compressed or compressed == "" then return "" end
-    
-    -- Decode from base64
-    local function fromBase64(data)
-        local b64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
-        local lookup = {}
-        for i = 1, #b64 do lookup[b64:sub(i,i)] = i-1 end
-        local bytes = {}
-        for i = 1, #data, 4 do
-            local c1 = lookup[data:sub(i,i)] or 0
-            local c2 = lookup[data:sub(i+1,i+1)] or 0
-            local c3 = lookup[data:sub(i+2,i+2)]
-            local c4 = lookup[data:sub(i+3,i+3)]
-            local n = c1*262144 + c2*4096 + (c3 or 0)*64 + (c4 or 0)
-            bytes[#bytes+1] = string.char(math.floor(n/65536)%256)
-            if c3 then bytes[#bytes+1] = string.char(math.floor(n/256)%256) end
-            if c4 then bytes[#bytes+1] = string.char(n%256) end
-        end
-        return table.concat(bytes)
-    end
-    
-    local rle = fromBase64(compressed)
-    
-    -- Decompress RLE
-    local function rleDecompress(str)
-        local result = {}
-        local i = 1
-        while i <= #str do
-            if str:sub(i, i) == "~" and i + 2 <= #str then
-                local count = string.byte(str:sub(i+1, i+1))
-                local char = str:sub(i+2, i+2)
-                for j = 1, count do
-                    result[#result + 1] = char
-                end
-                i = i + 3
+-- Decompress tiny config string
+function decompressConfig(str)
+    local data = {}
+    for part in str:gmatch("[^,]+") do
+        local keyChar = part:sub(1, 1)
+        local valStr = part:sub(2)
+        local key = REVERSE_MAP[keyChar]
+        if key then
+            local default = DEFAULTS[key]
+            if type(default) == "boolean" then
+                data[key] = valStr == "1"
+            elseif type(default) == "number" then
+                data[key] = tonumber(valStr) or default
             else
-                result[#result + 1] = str:sub(i, i)
-                i = i + 1
+                data[key] = valStr
             end
         end
-        return table.concat(result)
     end
-    
-    return rleDecompress(rle)
+    return data
 end
 
--- Store the config string globally for loading
-_G._viperwareConfigString = ""
+-- Base64 URL-safe encode (even smaller)
+local B64_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
+function toBase64(str)
+    local result = {}
+    local bytes = {string.byte(str, 1, #str)}
+    for i = 1, #bytes, 3 do
+        local b1, b2, b3 = bytes[i] or 0, bytes[i+1] or 0, bytes[i+2] or 0
+        local n = b1 * 65536 + b2 * 256 + b3
+        result[#result+1] = B64_CHARS:sub(math.floor(n/262144)%64+1, math.floor(n/262144)%64+1)
+        result[#result+1] = B64_CHARS:sub(math.floor(n/4096)%64+1, math.floor(n/4096)%64+1)
+        if bytes[i+1] then
+            result[#result+1] = B64_CHARS:sub(math.floor(n/64)%64+1, math.floor(n/64)%64+1)
+        else
+            result[#result+1] = "="
+        end
+        if bytes[i+2] then
+            result[#result+1] = B64_CHARS:sub(n%64+1, n%64+1)
+        else
+            result[#result+1] = "="
+        end
+    end
+    return table.concat(result)
+end
 
+function fromBase64(str)
+    local lookup = {}
+    for i = 1, #B64_CHARS do lookup[B64_CHARS:sub(i,i)] = i-1 end
+    local bytes = {}
+    for i = 1, #str, 4 do
+        local c1 = lookup[str:sub(i,i)] or 0
+        local c2 = lookup[str:sub(i+1,i+1)] or 0
+        local c3 = lookup[str:sub(i+2,i+2)] or 0
+        local c4 = lookup[str:sub(i+3,i+3)] or 0
+        local n = c1*262144 + c2*4096 + c3*64 + c4
+        bytes[#bytes+1] = string.char(math.floor(n/65536)%256)
+        if str:sub(i+2,i+2) ~= "=" then
+            bytes[#bytes+1] = string.char(math.floor(n/256)%256)
+        end
+        if str:sub(i+3,i+3) ~= "=" then
+            bytes[#bytes+1] = string.char(n%256)
+        end
+    end
+    return table.concat(bytes)
+end
+
+-- Get current config as tiny string
+function getTinyConfig()
+    local data = {}
+    for k in pairs(FEATURE_MAP) do
+        local val
+        if k == "stamOn" then val = stam and stam.on
+        elseif k == "stamLoss" then val = stam and stam.loss
+        elseif k == "stamGain" then val = stam and stam.gain
+        elseif k == "stamMax" then val = stam and stam.max
+        elseif k == "stamCurrent" then val = stam and stam.current
+        elseif k == "stamNoLoss" then val = stam and stam.noLoss
+        elseif k == "hbOn" then val = hb and hb.on
+        elseif k == "hbStrength" then val = hb and hb.strength
+        elseif k == "acOn" then val = ac and ac.on
+        elseif k == "acStrength" then val = ac and ac.strength
+        elseif k == "acMaxDist" then val = ac and ac.maxDist
+        elseif k == "flowOn" then val = flow and flow.on
+        elseif k == "flowNodeDelay" then val = flow and flow.nodeDelay
+        elseif k == "flowLineDelay" then val = flow and flow.lineDelay
+        elseif k == "aimOn" then val = aim and aim.on
+        elseif k == "aimCooldown" then val = aim and aim.cooldown
+        elseif k == "aimLockTime" then val = aim and aim.lockTime
+        elseif k == "aimMaxDist" then val = aim and aim.maxDist
+        elseif k == "aimSmooth" then val = aim and aim.smooth
+        elseif k == "absOn" then val = abs and abs.on
+        elseif k == "absRange" then val = abs and abs.range
+        elseif k == "absDur" then val = abs and abs.duration
+        elseif k == "sixerStrafeOn" then val = sixerStrafeOn
+        elseif k == "coolkidWSOOn" then val = coolkidWSOOn
+        elseif k == "noliVoidRushOn" then val = noliVoidRushOn
+        elseif k == "displayKillers" then val = displaySystem and displaySystem.showKillers
+        elseif k == "displaySurvivors" then val = displaySystem and displaySystem.showSurvivors
+        elseif k == "displayGenerators" then val = displaySystem and displaySystem.showGenerators
+        elseif k == "displayItems" then val = displaySystem and displaySystem.showItems
+        elseif k == "displayBuildings" then val = displaySystem and displaySystem.showBuildings
+        elseif k == "espPizza" then val = mset and mset.pizza
+        elseif k == "espZombie" then val = mset and mset.zombie
+        elseif k == "espPuddle" then val = mset and mset.puddle
+        elseif k == "espMinionTrans" then val = mset and mset.transparency
+        elseif k == "bloodOn" then val = bloodstain and bloodstain.on
+        elseif k == "bloodIntensity" then val = bloodstain and bloodstain.intensity
+        elseif k == "bloodDistance" then val = bloodstain and bloodstain.distance
+        elseif k == "musicOn" then val = music and music.on
+        elseif k == "musicSel" then val = music and music.selected
+        elseif k == "spoofActive" then val = spoofActive
+        elseif k == "chatForceEnabled" then val = chatForceEnabled
+        elseif k == "platEnabled" then val = platEnabled
+        elseif k == "platDevice" then val = platDevice
+        elseif k == "timerSide" then val = timerSide
+        else val = nil
+        end
+        if val ~= nil then data[k] = val end
+    end
+    return toBase64(compressConfig(data))
+end
+
+-- Apply tiny config (properly loads all flags and calls callbacks)
+function applyTinyConfig(encoded)
+    local compressed = fromBase64(encoded)
+    local data = decompressConfig(compressed)
+    
+    for k, v in pairs(data) do
+        if k == "stamOn" then stam.on = v
+        elseif k == "stamLoss" then stam.loss = v
+        elseif k == "stamGain" then stam.gain = v
+        elseif k == "stamMax" then stam.max = v
+        elseif k == "stamCurrent" then stam.current = v
+        elseif k == "stamNoLoss" then stam.noLoss = v
+        elseif k == "hbOn" then hb.on = v; if v then hbStart() else hbStop() end
+        elseif k == "hbStrength" then hb.strength = v
+        elseif k == "acOn" then ac.on = v
+        elseif k == "acStrength" then ac.strength = v
+        elseif k == "acMaxDist" then ac.maxDist = v
+        elseif k == "flowOn" then flow.on = v
+        elseif k == "flowNodeDelay" then flow.nodeDelay = v
+        elseif k == "flowLineDelay" then flow.lineDelay = v
+        elseif k == "aimOn" then aim.on = v; if not v then aimUnlock() end
+        elseif k == "aimCooldown" then aim.cooldown = v
+        elseif k == "aimLockTime" then aim.lockTime = v
+        elseif k == "aimMaxDist" then aim.maxDist = v
+        elseif k == "aimSmooth" then aim.smooth = v
+        elseif k == "absOn" then abs.on = v; if v then absStart() else absStop() end
+        elseif k == "absRange" then abs.range = v; absResizeRings()
+        elseif k == "absDur" then abs.duration = v
+        elseif k == "sixerStrafeOn" then sixerStrafeOn = v
+        elseif k == "coolkidWSOOn" then coolkidWSOOn = v
+        elseif k == "noliVoidRushOn" then noliVoidRushOn = v; if not v then noliStop() end
+        elseif k == "displayKillers" then displaySystem.showKillers = v; task.spawn(function() updateThreatDisplay(v) end)
+        elseif k == "displaySurvivors" then displaySystem.showSurvivors = v; task.spawn(function() updateTeammateDisplay(v) end)
+        elseif k == "displayGenerators" then displaySystem.showGenerators = v; task.spawn(function() updateObjectiveDisplay(v) end)
+        elseif k == "displayItems" then displaySystem.showItems = v; task.spawn(function() updateLootDisplay(v) end)
+        elseif k == "displayBuildings" then displaySystem.showBuildings = v; task.spawn(function() updateStructureDisplay(v) end)
+        elseif k == "espPizza" then mset.pizza = v; if v then scanPizza() else clearTag("pizza") end
+        elseif k == "espZombie" then mset.zombie = v; if v then scanZombie() else clearTag("zombie") end
+        elseif k == "espPuddle" then mset.puddle = v; if v then scanPuddles() else clearTag("puddle") end
+        elseif k == "espMinionTrans" then mset.transparency = v; updateTransparency()
+        elseif k == "bloodOn" then bloodstain.on = v; if v then bloodStartMonitoring() else bloodStopMonitoring() end
+        elseif k == "bloodIntensity" then bloodstain.intensity = v
+        elseif k == "bloodDistance" then bloodstain.distance = v
+        elseif k == "musicOn" then music.on = v; if v then music.thread = task.spawn(musicMonitor) else if music.thread then task.cancel(music.thread); music.thread = nil end end
+        elseif k == "musicSel" then music.selected = v
+        elseif k == "spoofActive" then spoofActive = v; if v then spoofStart() else spoofStop() end
+        elseif k == "chatForceEnabled" then chatForceEnabled = v; if v then enforceChatOn() end
+        elseif k == "platEnabled" then platEnabled = v; if v then platStart() else platStop() end
+        elseif k == "platDevice" then platDevice = v
+        elseif k == "timerSide" then timerSide = v; applyTimerPos()
+        end
+    end
+    
+    -- Start/stop features based on state
+    if stam.on then stamStart() else stamStop() end
+    if music.on then musicFetchAsync(music.selected) end
+end
+
+-- Copy config (tiny!)
 secConfigShare:Button({
-    Title = "📋 Copy Config (Compressed)",
+    Title = "📋 Copy Config (Tiny!)",
     Icon = "copy",
     Callback = function()
         local ok, err = pcall(function()
-            local raw = readfile(CONFIG_PATH)
-            local compressed = LZ.compress(raw)
-            -- Add version and marker for compatibility
-            local shareString = "vw:" .. compressed
-            setclipboard(shareString)
-            _G._viperwareConfigString = shareString
+            local tiny = getTinyConfig()
+            setclipboard("vw:" .. tiny)
         end)
         if ok then
-            local len = #(_G._viperwareConfigString or "")
-            ui:Notify({ 
-                Title = "Config Copied!", 
-                Content = "Size: " .. len .. " chars (much smaller for Discord!)", 
-                Icon = "copy", 
-                Duration = 3 
-            })
+            ui:Notify({ Title = "Config Copied!", Content = "Tiny string! Paste anywhere!", Icon = "copy", Duration = 3 })
         else
             ui:Notify({ Title = "Copy Failed", Content = tostring(err), Icon = "x", Duration = 3 })
         end
@@ -2157,10 +2240,9 @@ local loadConfigStr = ""
 secConfigShare:Input({
     Title = "Paste Config String",
     Icon = "clipboard",
-    Placeholder = "vw:...",
+    Placeholder = "vw:... (tiny string)",
     Callback = function(val)
         loadConfigStr = val
-        _G._viperwareConfigString = val
     end
 })
 
@@ -2173,41 +2255,80 @@ secConfigShare:Button({
             return
         end
         local ok, err = pcall(function()
-            local compressed = loadConfigStr:sub(4) -- Remove "vw:" prefix
-            local decoded = LZ.decompress(compressed)
-            writefile(CONFIG_PATH, decoded)
+            local tiny = loadConfigStr:sub(4)
+            applyTinyConfig(tiny)
+            -- Also save to disk for persistence
+            local fullData = {}
+            for k in pairs(FEATURE_MAP) do
+                local val
+                if k == "stamOn" then val = stam.on
+                elseif k == "stamLoss" then val = stam.loss
+                elseif k == "stamGain" then val = stam.gain
+                elseif k == "stamMax" then val = stam.max
+                elseif k == "stamCurrent" then val = stam.current
+                elseif k == "stamNoLoss" then val = stam.noLoss
+                elseif k == "hbOn" then val = hb.on
+                elseif k == "hbStrength" then val = hb.strength
+                elseif k == "acOn" then val = ac.on
+                elseif k == "acStrength" then val = ac.strength
+                elseif k == "acMaxDist" then val = ac.maxDist
+                elseif k == "flowOn" then val = flow.on
+                elseif k == "flowNodeDelay" then val = flow.nodeDelay
+                elseif k == "flowLineDelay" then val = flow.lineDelay
+                elseif k == "aimOn" then val = aim.on
+                elseif k == "aimCooldown" then val = aim.cooldown
+                elseif k == "aimLockTime" then val = aim.lockTime
+                elseif k == "aimMaxDist" then val = aim.maxDist
+                elseif k == "aimSmooth" then val = aim.smooth
+                elseif k == "absOn" then val = abs.on
+                elseif k == "absRange" then val = abs.range
+                elseif k == "absDur" then val = abs.duration
+                elseif k == "sixerStrafeOn" then val = sixerStrafeOn
+                elseif k == "coolkidWSOOn" then val = coolkidWSOOn
+                elseif k == "noliVoidRushOn" then val = noliVoidRushOn
+                elseif k == "displayKillers" then val = displaySystem.showKillers
+                elseif k == "displaySurvivors" then val = displaySystem.showSurvivors
+                elseif k == "displayGenerators" then val = displaySystem.showGenerators
+                elseif k == "displayItems" then val = displaySystem.showItems
+                elseif k == "displayBuildings" then val = displaySystem.showBuildings
+                elseif k == "espPizza" then val = mset.pizza
+                elseif k == "espZombie" then val = mset.zombie
+                elseif k == "espPuddle" then val = mset.puddle
+                elseif k == "espMinionTrans" then val = mset.transparency
+                elseif k == "bloodOn" then val = bloodstain.on
+                elseif k == "bloodIntensity" then val = bloodstain.intensity
+                elseif k == "bloodDistance" then val = bloodstain.distance
+                elseif k == "musicOn" then val = music.on
+                elseif k == "musicSel" then val = music.selected
+                elseif k == "spoofActive" then val = spoofActive
+                elseif k == "chatForceEnabled" then val = chatForceEnabled
+                elseif k == "platEnabled" then val = platEnabled
+                elseif k == "platDevice" then val = platDevice
+                elseif k == "timerSide" then val = timerSide
+                else val = nil
+                end
+                if val ~= nil then fullData[k] = val end
+            end
+            writefile(CONFIG_PATH, svc.Http:JSONEncode(fullData))
             viperConfig:Load()
         end)
         if ok then
-            ui:Notify({ Title = "Config Loaded!", Content = "Settings applied!", Icon = "check", Duration = 4 })
+            ui:Notify({ Title = "Config Loaded!", Content = "All settings applied!", Icon = "check", Duration = 4 })
         else
-            ui:Notify({ Title = "Load Failed", Content = "Invalid or corrupted config string.", Icon = "x", Duration = 3 })
+            ui:Notify({ Title = "Load Failed", Content = "Invalid config string.", Icon = "x", Duration = 3 })
         end
     end
 })
 
 secConfigShare:Button({
-    Title = "📊 Show Config Size",
+    Title = "📊 Config Size",
     Icon = "info",
     Callback = function()
-        local ok, err = pcall(function()
-            local raw = readfile(CONFIG_PATH)
-            local compressed = LZ.compress(raw)
-            local originalSize = #raw
-            local compressedSize = #compressed
-            local savings = math.floor((1 - compressedSize/originalSize) * 100)
-            ui:Notify({ 
-                Title = "Config Size Info", 
-                Content = "Original: " .. originalSize .. " chars\nCompressed: " .. compressedSize .. " chars\nSaved: " .. savings .. "%", 
-                Icon = "info", 
-                Duration = 5 
-            })
-        end)
-        if not ok then
-            ui:Notify({ Title = "Error", Content = "Could not read config", Icon = "x", Duration = 3 })
-        end
+        local tiny = getTinyConfig()
+        ui:Notify({ Title = "Config Size", Content = "Length: " .. #tiny .. " chars\nFormat: vw:" .. tiny:sub(1, 10) .. "...", Icon = "info", Duration = 5 })
     end
 })
+
 ------------------------------------------------------------------------
 -- Auto-save loop
 ------------------------------------------------------------------------
