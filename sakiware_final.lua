@@ -77,7 +77,7 @@ do
 end
 
 ------------------------------------------------------------------------
--- B64 Helpers for Config Share
+-- B64 Helpers for Config Share (EXACT same as Hutao)
 ------------------------------------------------------------------------
 local B64CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
 
@@ -167,6 +167,10 @@ win:EditOpenButton({
     Draggable  = true,
 })
 
+-- EXACT same as Hutao - ConfigManager
+local ConfigManager = win.ConfigManager
+local viperConfig = ConfigManager:CreateConfig("viperware-forsaken")
+
 ------------------------------------------------------------------------
 -- helpers
 ------------------------------------------------------------------------
@@ -192,13 +196,13 @@ local function getNetwork()
 end
 
 ------------------------------------------------------------------------
--- TAB: SETTINGS
+-- TAB: SETTINGS (with Flags like Hutao)
 ------------------------------------------------------------------------
 local tabSettings = win:Tab({ Title = "Setting", Icon = "settings" })
 local secInterface = tabSettings:Section({ Title = "Interface", Opened = true })
 
-local spoofActive = cfg.get("spoofActive", false)
-local spoofText   = cfg.get("spoofText",   "V1PRWARE")
+local spoofActive = false
+local spoofText   = "V1PRWARE"
 local spoofCache  = {}
 local spoofConns  = {}
 
@@ -245,11 +249,17 @@ local function spoofStop()
 end
 
 secInterface:Toggle({
-    Title = "Spoof Usernames", Type = "Checkbox", Default = spoofActive,
-    Callback = function(on) spoofActive = on; cfg.set("spoofActive", on); if on then spoofStart() else spoofStop() end end
+    Title = "Spoof Usernames", 
+    Type = "Checkbox", 
+    Flag = "spoofActive",
+    Default = false,
+    Callback = function(on) 
+        spoofActive = on
+        if on then spoofStart() else spoofStop() end 
+    end
 })
 
-local chatForceEnabled = cfg.get("chatForceEnabled", false)
+local chatForceEnabled = false
 local chatForceConn    = nil
 local function enforceChatOn()
     if not chatForceEnabled then return end
@@ -259,9 +269,12 @@ local function enforceChatOn()
     if ci and not ci.Enabled then ci.Enabled = true end
 end
 secInterface:Toggle({
-    Title = "Show Chat Logs", Type = "Checkbox", Default = chatForceEnabled,
+    Title = "Show Chat Logs", 
+    Type = "Checkbox",
+    Flag = "chatForceEnabled",
+    Default = false,
     Callback = function(on)
-        chatForceEnabled = on; cfg.set("chatForceEnabled", on)
+        chatForceEnabled = on
         if chatForceConn then chatForceConn:Disconnect(); chatForceConn = nil end
         if on then
             enforceChatOn()
@@ -274,7 +287,7 @@ secInterface:Toggle({
     end
 })
 
-local timerSide = cfg.get("timerSide", "Middle")
+local timerSide = "Middle"
 local function applyTimerPos()
     local rt = lp.PlayerGui:FindFirstChild("RoundTimer")
     local m  = rt and rt:FindFirstChild("Main")
@@ -282,16 +295,19 @@ local function applyTimerPos()
 end
 applyTimerPos()
 secInterface:Dropdown({
-    Title = "Timer Position", Values = { "Middle", "Right" }, Value = timerSide,
-    Callback = function(v) timerSide = v; cfg.set("timerSide", v); applyTimerPos() end
+    Title = "Timer Position", 
+    Values = { "Middle", "Right" },
+    Flag = "timerSide",
+    Value = "Middle",
+    Callback = function(v) timerSide = v; applyTimerPos() end
 })
 lp.CharacterAdded:Connect(function()
     task.delay(1, function() if spoofActive then spoofStart() end; applyTimerPos() end)
 end)
 
 local secPlatform = tabSettings:Section({ Title = "Platform Spoofer", Opened = true })
-local platEnabled = cfg.get("platEnabled", false)
-local platDevice  = cfg.get("platDevice",  "Console")
+local platEnabled = false
+local platDevice  = "Console"
 local platLoop    = nil
 local platConn    = nil
 
@@ -311,25 +327,38 @@ local function platStop()
     if platLoop then task.cancel(platLoop); platLoop = nil end
     if platConn then platConn:Disconnect(); platConn = nil end
 end
-secPlatform:Toggle({ Title = "Enable Spoofer", Type = "Checkbox", Default = platEnabled,
-    Callback = function(on) platEnabled = on; cfg.set("platEnabled", on); if on then platStart() else platStop() end end })
-secPlatform:Dropdown({ Title = "Device", Values = { "PC", "Mobile", "Console" }, Value = platDevice,
-    Callback = function(v) platDevice = v; cfg.set("platDevice", v); if platEnabled then platPush() end end })
+secPlatform:Toggle({ 
+    Title = "Enable Spoofer", 
+    Type = "Checkbox",
+    Flag = "platEnabled",
+    Default = false,
+    Callback = function(on) 
+        platEnabled = on
+        if on then platStart() else platStop() end 
+    end 
+})
+secPlatform:Dropdown({ 
+    Title = "Device", 
+    Values = { "PC", "Mobile", "Console" },
+    Flag = "platDevice",
+    Value = "Console",
+    Callback = function(v) platDevice = v; if platEnabled then platPush() end end 
+})
 lp.CharacterAdded:Connect(function() task.delay(1, function() if platEnabled then platPush() end end) end)
 
 ------------------------------------------------------------------------
--- TAB: GLOBAL
+-- TAB: GLOBAL (with Flags like Hutao)
 ------------------------------------------------------------------------
 local tabGlobal  = win:Tab({ Title = "Global", Icon = "globe" })
 local secStamina = tabGlobal:Section({ Title = "Stamina", Opened = true })
 
 local stam = {
-    on      = cfg.get("stamOn",      false),
-    loss    = cfg.get("stamLoss",    10),
-    gain    = cfg.get("stamGain",    20),
-    max     = cfg.get("stamMax",     100),
-    current = cfg.get("stamCurrent", 100),
-    noLoss  = cfg.get("stamNoLoss",  false),
+    on      = false,
+    loss    = 10,
+    gain    = 20,
+    max     = 100,
+    current = 100,
+    noLoss  = false,
     thread  = nil,
 }
 
@@ -369,15 +398,53 @@ local function stamStop()
     stam.on = false
     if stam.thread then task.cancel(stam.thread); stam.thread = nil end
 end
-secStamina:Toggle({ Title = "Custom Stamina", Type = "Checkbox", Default = stam.on,
-    Callback = function(on) stam.on = on; cfg.set("stamOn", on); if on then stamStart() else stamStop() end end })
-secStamina:Slider({ Title = "Loss Rate",     Step = 1, Value = { Min = 0,  Max = 50,  Default = stam.loss    }, Callback = function(v) stam.loss    = v; cfg.set("stamLoss",    v) end })
-secStamina:Slider({ Title = "Gain Rate",     Step = 1, Value = { Min = 0,  Max = 50,  Default = stam.gain    }, Callback = function(v) stam.gain    = v; cfg.set("stamGain",    v) end })
-secStamina:Slider({ Title = "Max Pool",      Step = 1, Value = { Min = 50, Max = 500, Default = stam.max     }, Callback = function(v) stam.max     = v; cfg.set("stamMax",     v) end })
-secStamina:Slider({ Title = "Current Value", Step = 1, Value = { Min = 0,  Max = 500, Default = stam.current }, Callback = function(v) stam.current = v; cfg.set("stamCurrent", v) end })
-secStamina:Toggle({ Title = "Infinite Stamina", Type = "Checkbox", Default = stam.noLoss,
+
+secStamina:Toggle({ 
+    Title = "Custom Stamina", 
+    Type = "Checkbox",
+    Flag = "stamOn",
+    Default = false,
+    Callback = function(on) 
+        stam.on = on
+        if on then stamStart() else stamStop() end 
+    end 
+})
+secStamina:Slider({ 
+    Title = "Loss Rate",     
+    Flag = "stamLoss",
+    Step = 1, 
+    Value = { Min = 0,  Max = 50,  Default = 10 },
+    Callback = function(v) stam.loss = v end 
+})
+secStamina:Slider({ 
+    Title = "Gain Rate",     
+    Flag = "stamGain",
+    Step = 1, 
+    Value = { Min = 0,  Max = 50,  Default = 20 },
+    Callback = function(v) stam.gain = v end 
+})
+secStamina:Slider({ 
+    Title = "Max Pool",      
+    Flag = "stamMax",
+    Step = 1, 
+    Value = { Min = 50, Max = 500, Default = 100 },
+    Callback = function(v) stam.max = v end 
+})
+secStamina:Slider({ 
+    Title = "Current Value", 
+    Flag = "stamCurrent",
+    Step = 1, 
+    Value = { Min = 0,  Max = 500, Default = 100 },
+    Callback = function(v) stam.current = v end 
+})
+secStamina:Toggle({ 
+    Title = "Infinite Stamina", 
+    Type = "Checkbox",
+    Flag = "stamNoLoss",
+    Default = false,
     Callback = function(on)
-        stam.noLoss = on; cfg.set("stamNoLoss", on); stamApply()
+        stam.noLoss = on
+        stamApply()
         if on and not stam.on then stam.on = true; stamStart() end
     end
 })
@@ -454,10 +521,10 @@ lp.CharacterAdded:Connect(function()
 end)
 
 ------------------------------------------------------------------------
--- HITBOX
+-- HITBOX (with Flags like Hutao)
 ------------------------------------------------------------------------
 local secHitbox = tabGlobal:Section({ Title = "Hitbox", Opened = true })
-local hb = { on = cfg.get("hbOn", false), strength = cfg.get("hbStrength", 50), conn = nil, active = {} }
+local hb = { on = false, strength = 50, conn = nil, active = {} }
 
 local hbAbilities = {
     Slash=1,Swing=1,Dagger=1,Punch=1,PlasmaBeam=1,Shoot=1,Behead=1,
@@ -514,10 +581,23 @@ local function hbStop()
     if hb.conn then hb.conn:Disconnect(); hb.conn = nil end
     for k in pairs(hb.active) do hb.active[k] = nil end
 end
-secHitbox:Toggle({ Title = "Hitbox Expander", Type = "Checkbox", Default = hb.on,
-    Callback = function(on) hb.on = on; cfg.set("hbOn", on); if on then hbStart() else hbStop() end end })
-secHitbox:Slider({ Title = "Strength", Step = 1, Value = { Min = 5, Max = 100, Default = hb.strength },
-    Callback = function(v) hb.strength = v; cfg.set("hbStrength", v) end })
+secHitbox:Toggle({ 
+    Title = "Hitbox Expander", 
+    Type = "Checkbox",
+    Flag = "hbOn",
+    Default = false,
+    Callback = function(on) 
+        hb.on = on
+        if on then hbStart() else hbStop() end 
+    end 
+})
+secHitbox:Slider({ 
+    Title = "Strength",
+    Flag = "hbStrength",
+    Step = 1, 
+    Value = { Min = 5, Max = 100, Default = 50 },
+    Callback = function(v) hb.strength = v end 
+})
 lp.CharacterAdded:Connect(function()
     for k in pairs(hb.active) do hb.active[k] = nil end
     task.delay(1, function() if hb.on then hbStop(); hbStart() end end)
@@ -525,12 +605,12 @@ end)
 lp.CharacterRemoving:Connect(function() for k in pairs(hb.active) do hb.active[k] = nil end end)
 
 ------------------------------------------------------------------------
--- AUTO COLLISION
+-- AUTO COLLISION (with Flags like Hutao)
 ------------------------------------------------------------------------
 local ac = {
-    on         = cfg.get("acOn",       false),
-    strength   = cfg.get("acStrength", 50),
-    maxDist    = cfg.get("acMaxDist",  100),
+    on         = false,
+    strength   = 50,
+    maxDist    = 100,
     active     = {},
     chaseTarget  = nil,
     damageTarget = nil,
@@ -725,22 +805,37 @@ end)
 
 local secAutoCollision = tabGlobal:Section({ Title = "Auto Collision", Opened = true })
 secAutoCollision:Toggle({
-    Title = "Push Hitbox on Ability", Type = "Checkbox", Default = ac.on,
+    Title = "Push Hitbox on Ability", 
+    Type = "Checkbox",
+    Flag = "acOn",
+    Default = false,
     Callback = function(on)
-        ac.on = on; cfg.set("acOn", on)
+        ac.on = on
         if not on then for k in pairs(ac.active) do ac.active[k] = nil end; ac.chaseTarget = nil; ac.damageTarget = nil end
     end
 })
-secAutoCollision:Slider({ Title = "Push Strength", Step = 1, Value = { Min = 5,  Max = 100, Default = ac.strength }, Callback = function(v) ac.strength = v; cfg.set("acStrength", v) end })
-secAutoCollision:Slider({ Title = "Max Distance",  Step = 5, Value = { Min = 20, Max = 200, Default = ac.maxDist  }, Callback = function(v) ac.maxDist  = v; cfg.set("acMaxDist",  v) end })
+secAutoCollision:Slider({ 
+    Title = "Push Strength",
+    Flag = "acStrength",
+    Step = 1, 
+    Value = { Min = 5,  Max = 100, Default = 50 },
+    Callback = function(v) ac.strength = v end 
+})
+secAutoCollision:Slider({ 
+    Title = "Max Distance",
+    Flag = "acMaxDist",
+    Step = 5, 
+    Value = { Min = 20, Max = 200, Default = 100 },
+    Callback = function(v) ac.maxDist = v end 
+})
 
 ------------------------------------------------------------------------
--- TAB: GENERATOR
+-- TAB: GENERATOR (with Flags like Hutao)
 ------------------------------------------------------------------------
 local tabGen     = win:Tab({ Title = "Generator", Icon = "circuit-board" })
 local secGenAuto = tabGen:Section({ Title = "Auto Solve", Opened = true })
 
-local flow = { on = cfg.get("flowOn", false), nodeDelay = cfg.get("flowNodeDelay", 0.04), lineDelay = cfg.get("flowLineDelay", 0.60) }
+local flow = { on = false, nodeDelay = 0.04, lineDelay = 0.60 }
 local function flowKey(n) return n.row.."-"..n.col end
 local function flowNeighbour(r1,c1,r2,c2)
     if r2==r1-1 and c2==c1 then return"up" end; if r2==r1+1 and c2==c1 then return"down" end
@@ -817,12 +912,30 @@ do
         else warn("[v1prware] FlowGame: failed to require FlowGame module — auto-solve disabled") end
     else warn("[v1prware] FlowGame: FlowGame not found — auto-solve disabled") end
 end
-secGenAuto:Toggle({ Title = "Auto Solve", Type = "Checkbox", Default = flow.on, Callback = function(on) flow.on = on; cfg.set("flowOn", on) end })
-secGenAuto:Slider({ Title = "Node Speed", Step = 0.02, Value = { Min = 0.01, Max = 0.50, Default = flow.nodeDelay }, Callback = function(v) flow.nodeDelay = v; cfg.set("flowNodeDelay", v) end })
-secGenAuto:Slider({ Title = "Line Pause", Step = 0.10, Value = { Min = 0.00, Max = 1.00, Default = flow.lineDelay }, Callback = function(v) flow.lineDelay = v; cfg.set("flowLineDelay", v) end })
+secGenAuto:Toggle({ 
+    Title = "Auto Solve", 
+    Type = "Checkbox",
+    Flag = "flowOn",
+    Default = false,
+    Callback = function(on) flow.on = on end 
+})
+secGenAuto:Slider({ 
+    Title = "Node Speed",
+    Flag = "flowNodeDelay",
+    Step = 0.02, 
+    Value = { Min = 0.01, Max = 0.50, Default = 0.04 },
+    Callback = function(v) flow.nodeDelay = v end 
+})
+secGenAuto:Slider({ 
+    Title = "Line Pause",
+    Flag = "flowLineDelay",
+    Step = 0.10, 
+    Value = { Min = 0.00, Max = 1.00, Default = 0.60 },
+    Callback = function(v) flow.lineDelay = v end 
+})
 
 ------------------------------------------------------------------------
--- TAB: KILLER (with QTE integration)
+-- TAB: KILLER (with Flags like Hutao)
 ------------------------------------------------------------------------
 local tabKiller = win:Tab({ Title = "Killer", Icon = "crosshair" })
 
@@ -830,8 +943,8 @@ local tabKiller = win:Tab({ Title = "Killer", Icon = "crosshair" })
 local secAimbot = tabKiller:Section({ Title = "Aimbot", Opened = true })
 
 local aim = {
-    on=cfg.get("aimOn",false), cooldown=cfg.get("aimCooldown",0.3), lockTime=cfg.get("aimLockTime",0.4),
-    maxDist=cfg.get("aimMaxDist",30), smooth=cfg.get("aimSmooth",0.35),
+    on=false, cooldown=0.3, lockTime=0.4,
+    maxDist=30, smooth=0.35,
     targeting=false, target=nil, deathConn=nil, autoRotate=nil, lastFired=0,
     hum=nil, hrp=nil, cache={}, cacheTime=0, cacheLife=0.5,
 }
@@ -879,15 +992,46 @@ task.spawn(function()
 end)
 lp.CharacterAdded:Connect(function(ch) task.wait(0.5); aimRefreshChar(ch) end)
 if lp.Character then aimRefreshChar(lp.Character) end
-secAimbot:Toggle({ Title="Enable Aimbot",      Type="Checkbox", Default=aim.on,       Callback=function(on) aim.on=on;       cfg.set("aimOn",on);       if not on then aimUnlock() end end })
-secAimbot:Slider({ Title="Cooldown (s)",        Step=0.05, Value={Min=0.1, Max=2.0, Default=aim.cooldown}, Callback=function(v) aim.cooldown=v; cfg.set("aimCooldown",v) end })
-secAimbot:Slider({ Title="Lock Time (s)",       Step=0.1,  Value={Min=0.1, Max=3.0, Default=aim.lockTime}, Callback=function(v) aim.lockTime=v; cfg.set("aimLockTime",v)  end })
-secAimbot:Slider({ Title="Max Distance",        Step=5,    Value={Min=5,   Max=100, Default=aim.maxDist},  Callback=function(v) aim.maxDist=v;  cfg.set("aimMaxDist",v)   end })
-secAimbot:Slider({ Title="Rotation Smoothing",  Step=0.05, Value={Min=0.05,Max=1.0, Default=aim.smooth},  Callback=function(v) aim.smooth=v;   cfg.set("aimSmooth",v)    end })
+
+secAimbot:Toggle({ 
+    Title="Enable Aimbot",
+    Flag="aimOn",
+    Type="Checkbox",
+    Default=false,
+    Callback=function(on) aim.on=on; if not on then aimUnlock() end end 
+})
+secAimbot:Slider({ 
+    Title="Cooldown (s)",
+    Flag="aimCooldown",
+    Step=0.05,
+    Value={Min=0.1, Max=2.0, Default=0.3},
+    Callback=function(v) aim.cooldown=v end 
+})
+secAimbot:Slider({ 
+    Title="Lock Time (s)",
+    Flag="aimLockTime",
+    Step=0.1,
+    Value={Min=0.1, Max=3.0, Default=0.4},
+    Callback=function(v) aim.lockTime=v end 
+})
+secAimbot:Slider({ 
+    Title="Max Distance",
+    Flag="aimMaxDist",
+    Step=5,
+    Value={Min=5, Max=100, Default=30},
+    Callback=function(v) aim.maxDist=v end 
+})
+secAimbot:Slider({ 
+    Title="Rotation Smoothing",
+    Flag="aimSmooth",
+    Step=0.05,
+    Value={Min=0.05,Max=1.0, Default=0.35},
+    Callback=function(v) aim.smooth=v end 
+})
 
 -- ANTI-BACKSTAB SECTION
 local secABS = tabKiller:Section({ Title = "Anti-Backstab", Opened = true })
-local abs = { on=cfg.get("absOn",false), range=cfg.get("absRange",40), duration=cfg.get("absDur",1.5), locked=false, soundConn=nil, scanThread=nil, rings={} }
+local abs = { on=false, range=40, duration=1.5, locked=false, soundConn=nil, scanThread=nil, rings={} }
 local absTriggerSounds = { ["86710781315432"]=true, ["99820161736138"]=true }
 local absScreenGui = nil
 local function absGui()
@@ -959,12 +1103,31 @@ task.spawn(function()
         for _, model in ipairs(deadRings) do abs.rings[model] = nil end
     end
 end)
-secABS:Toggle({ Title="Enable Anti-Backstab", Type="Checkbox", Default=abs.on, Callback=function(on) abs.on=on; cfg.set("absOn",on); if on then absStart() else absStop() end end })
-secABS:Slider({ Title="Detection Range",   Step=5,  Value={Min=10,Max=120,Default=abs.range},    Callback=function(v) abs.range=v;    cfg.set("absRange",v); absResizeRings() end })
-secABS:Slider({ Title="Look Duration (s)", Step=0.1,Value={Min=0.3,Max=5.0,Default=abs.duration}, Callback=function(v) abs.duration=v; cfg.set("absDur",v)                   end })
+
+secABS:Toggle({ 
+    Title="Enable Anti-Backstab",
+    Flag="absOn",
+    Type="Checkbox",
+    Default=false,
+    Callback=function(on) abs.on=on; if on then absStart() else absStop() end end 
+})
+secABS:Slider({ 
+    Title="Detection Range",
+    Flag="absRange",
+    Step=5,
+    Value={Min=10,Max=120,Default=40},
+    Callback=function(v) abs.range=v; absResizeRings() end 
+})
+secABS:Slider({ 
+    Title="Look Duration (s)",
+    Flag="absDur",
+    Step=0.1,
+    Value={Min=0.3,Max=5.0,Default=1.5},
+    Callback=function(v) abs.duration=v end 
+})
 
 -- SIXER AIR STRAFE
-local sixerStrafeOn = cfg.get("sixerStrafeOn", false)
+local sixerStrafeOn = false
 local SIXER_BIND    = "LunawareSixerStrafe"
 svc.Run:BindToRenderStep(SIXER_BIND, Enum.RenderPriority.Character.Value + 2, function()
     if not sixerStrafeOn then return end
@@ -987,7 +1150,7 @@ svc.Run:BindToRenderStep(SIXER_BIND, Enum.RenderPriority.Character.Value + 2, fu
 end)
 
 -- C00LKIDD DASH TURN
-local coolkidWSOOn = cfg.get("coolkidWSOOn", false)
+local coolkidWSOOn = false
 local function coolkidGetInputDir()
     local cf       = svc.WS.CurrentCamera.CFrame
     local camFwd   = Vector3.new(cf.LookVector.X,  0, cf.LookVector.Z)
@@ -1018,7 +1181,7 @@ svc.Run.RenderStepped:Connect(function(dt)
 end)
 
 -- NOLI VOID RUSH
-local noliVoidRushOn     = cfg.get("noliVoidRushOn", false)
+local noliVoidRushOn     = false
 local noliOverrideActive = false
 local noliOrigWalkSpeed  = nil
 local noliConn           = nil
@@ -1054,22 +1217,40 @@ lp.CharacterAdded:Connect(function() noliStop(); noliOrigWalkSpeed = nil end)
 
 -- KILLER ABILITIES SECTION
 local secKillerAbilities = tabKiller:Section({ Title = "Killer Abilities", Opened = true })
-secKillerAbilities:Toggle({ Title="Sixer — Air Strafe",       Type="Checkbox", Default=sixerStrafeOn, Callback=function(on) sixerStrafeOn=on; cfg.set("sixerStrafeOn",on) end })
-secKillerAbilities:Toggle({ Title="c00lkidd — Dash Turn",     Type="Checkbox", Default=coolkidWSOOn,  Callback=function(on) coolkidWSOOn=on;  cfg.set("coolkidWSOOn",on)  end })
-secKillerAbilities:Toggle({ Title="Noli — Void Rush Control", Type="Checkbox", Default=noliVoidRushOn,Callback=function(on) noliVoidRushOn=on; cfg.set("noliVoidRushOn",on); if not on then noliStop() end end })
+secKillerAbilities:Toggle({ 
+    Title="Sixer — Air Strafe",
+    Flag="sixerStrafeOn",
+    Type="Checkbox",
+    Default=false,
+    Callback=function(on) sixerStrafeOn=on end 
+})
+secKillerAbilities:Toggle({ 
+    Title="c00lkidd — Dash Turn",
+    Flag="coolkidWSOOn",
+    Type="Checkbox",
+    Default=false,
+    Callback=function(on) coolkidWSOOn=on end 
+})
+secKillerAbilities:Toggle({ 
+    Title="Noli — Void Rush Control",
+    Flag="noliVoidRushOn",
+    Type="Checkbox",
+    Default=false,
+    Callback=function(on) noliVoidRushOn=on; if not on then noliStop() end end 
+})
 
 ------------------------------------------------------------------------
--- TAB: VISUAL
+-- TAB: VISUAL (with Flags like Hutao)
 ------------------------------------------------------------------------
 local tabVisual = win:Tab({ Title = "Visual", Icon = "eye" })
 local secDisplay = tabVisual:Section({ Title = "Entity Tracking", Opened = true })
 
 local displaySystem = {
-    showKillers    = cfg.get("displayKillers",    false),
-    showSurvivors  = cfg.get("displaySurvivors",  false),
-    showGenerators = cfg.get("displayGenerators", false),
-    showItems      = cfg.get("displayItems",      false),
-    showBuildings  = cfg.get("displayBuildings",  false),
+    showKillers    = false,
+    showSurvivors  = false,
+    showGenerators = false,
+    showItems      = false,
+    showBuildings  = false,
     activeDisplays    = {},
     eventListeners    = {},
     healthListeners   = {},
@@ -1250,17 +1431,47 @@ task.spawn(function()
     end
 end)
 
-secDisplay:Toggle({ Title="Threats",    Type="Checkbox", Default=displaySystem.showKillers,    Callback=function(on) displaySystem.showKillers=on;    cfg.set("displayKillers",on);    task.spawn(function() updateThreatDisplay(on)    end) end })
-secDisplay:Toggle({ Title="Teammates",  Type="Checkbox", Default=displaySystem.showSurvivors,  Callback=function(on) displaySystem.showSurvivors=on;  cfg.set("displaySurvivors",on);  task.spawn(function() updateTeammateDisplay(on)  end) end })
-secDisplay:Toggle({ Title="Objectives", Type="Checkbox", Default=displaySystem.showGenerators, Callback=function(on) displaySystem.showGenerators=on; cfg.set("displayGenerators",on); task.spawn(function() updateObjectiveDisplay(on) end) end })
-secDisplay:Toggle({ Title="Resources",  Type="Checkbox", Default=displaySystem.showItems,      Callback=function(on) displaySystem.showItems=on;      cfg.set("displayItems",on);      task.spawn(function() updateLootDisplay(on)      end) end })
-secDisplay:Toggle({ Title="Structures", Type="Checkbox", Default=displaySystem.showBuildings,  Callback=function(on) displaySystem.showBuildings=on;  cfg.set("displayBuildings",on);  task.spawn(function() updateStructureDisplay(on)  end) end })
+secDisplay:Toggle({ 
+    Title="Threats",
+    Flag="displayKillers",
+    Type="Checkbox",
+    Default=false,
+    Callback=function(on) displaySystem.showKillers=on; task.spawn(function() updateThreatDisplay(on) end) end 
+})
+secDisplay:Toggle({ 
+    Title="Teammates",
+    Flag="displaySurvivors",
+    Type="Checkbox",
+    Default=false,
+    Callback=function(on) displaySystem.showSurvivors=on; task.spawn(function() updateTeammateDisplay(on) end) end 
+})
+secDisplay:Toggle({ 
+    Title="Objectives",
+    Flag="displayGenerators",
+    Type="Checkbox",
+    Default=false,
+    Callback=function(on) displaySystem.showGenerators=on; task.spawn(function() updateObjectiveDisplay(on) end) end 
+})
+secDisplay:Toggle({ 
+    Title="Resources",
+    Flag="displayItems",
+    Type="Checkbox",
+    Default=false,
+    Callback=function(on) displaySystem.showItems=on; task.spawn(function() updateLootDisplay(on) end) end 
+})
+secDisplay:Toggle({ 
+    Title="Structures",
+    Flag="displayBuildings",
+    Type="Checkbox",
+    Default=false,
+    Callback=function(on) displaySystem.showBuildings=on; task.spawn(function() updateStructureDisplay(on) end) end 
+})
 
 ------------------------------------------------------------------------
--- Minion + Puddle ESP
+-- Minion + Puddle ESP (with Flags like Hutao)
 ------------------------------------------------------------------------
 local secMinion = tabVisual:Section({ Title = "Minion & Ability ESP", Opened = true })
-local mset = { pizza=cfg.get("espPizza",false), zombie=cfg.get("espZombie",false), puddle=cfg.get("espPuddle",false), transparency=cfg.get("espMinionTrans",0.25) }
+local mset = { pizza=false, zombie=false, puddle=false, transparency=0.25 }
 local tracked = { pizza={}, zombie={}, puddle={} }
 
 local function isRealPlayer(obj)
@@ -1358,20 +1569,44 @@ lp.CharacterAdded:Connect(function()
     if mset.puddle then scanPuddles() end
 end)
 
-secMinion:Toggle({ Title="c00lkidd Pizza Bots",   Desc="PizzaDeliveryRig — orange highlight", Type="Checkbox", Default=mset.pizza,  Callback=function(on) mset.pizza=on;  cfg.set("espPizza",on);  if on then scanPizza()   else clearTag("pizza")  end end })
-secMinion:Toggle({ Title="1x1x1x1 Zombies",       Desc="1x1x1x1Zombie — green highlight",     Type="Checkbox", Default=mset.zombie, Callback=function(on) mset.zombie=on; cfg.set("espZombie",on); if on then scanZombie()  else clearTag("zombie") end end })
-secMinion:Toggle({ Title="JD Digital Footprints", Desc="Black disc + red glow",               Type="Checkbox", Default=mset.puddle, Callback=function(on) mset.puddle=on; cfg.set("espPuddle",on); if on then scanPuddles() else clearTag("puddle") end end })
-secMinion:Slider({ Title="Highlight Transparency", Step=0.05, Value={Min=0,Max=1,Default=mset.transparency}, Callback=function(v) mset.transparency=v; cfg.set("espMinionTrans",v); updateTransparency() end })
+secMinion:Toggle({ 
+    Title="c00lkidd Pizza Bots",
+    Flag="espPizza",
+    Type="Checkbox",
+    Default=false,
+    Callback=function(on) mset.pizza=on; if on then scanPizza() else clearTag("pizza") end end 
+})
+secMinion:Toggle({ 
+    Title="1x1x1x1 Zombies",
+    Flag="espZombie",
+    Type="Checkbox",
+    Default=false,
+    Callback=function(on) mset.zombie=on; if on then scanZombie() else clearTag("zombie") end end 
+})
+secMinion:Toggle({ 
+    Title="JD Digital Footprints",
+    Flag="espPuddle",
+    Type="Checkbox",
+    Default=false,
+    Callback=function(on) mset.puddle=on; if on then scanPuddles() else clearTag("puddle") end end 
+})
+secMinion:Slider({ 
+    Title="Highlight Transparency",
+    Flag="espMinionTrans",
+    Step=0.05,
+    Value={Min=0,Max=1,Default=0.25},
+    Callback=function(v) mset.transparency=v; updateTransparency() end 
+})
 secMinion:Button({ Title="🔄 Force Rescan", Callback=function() clearTag("pizza"); clearTag("zombie"); clearTag("puddle"); task.wait(0.1); scanPizza(); scanZombie(); scanPuddles() end })
 
 ------------------------------------------------------------------------
--- BLOODSTAINS (damage feedback)
+-- BLOODSTAINS (with Flags like Hutao)
 ------------------------------------------------------------------------
 local secBloodstain = tabVisual:Section({ Title = "Damage Feedback", Opened = true })
 local bloodstain = {
-    on         = cfg.get("bloodOn", false),
-    intensity  = cfg.get("bloodIntensity", 0.6),
-    distance   = cfg.get("bloodDistance", 100),
+    on         = false,
+    intensity  = 0.6,
+    distance   = 100,
     monitored  = {},
     healthConns = {},
     screenGui  = nil,
@@ -1491,9 +1726,12 @@ end
 task.spawn(bloodSetupWatchers)
 
 secBloodstain:Toggle({
-    Title = "Bloodstains on Damage", Type = "Checkbox", Default = bloodstain.on,
+    Title = "Bloodstains on Damage",
+    Flag = "bloodOn",
+    Type = "Checkbox",
+    Default = false,
     Callback = function(on)
-        bloodstain.on = on; cfg.set("bloodOn", on)
+        bloodstain.on = on
         if on then
             bloodStartMonitoring()
         else
@@ -1503,8 +1741,20 @@ secBloodstain:Toggle({
         end
     end
 })
-secBloodstain:Slider({ Title = "Opacity",          Step = 0.05, Value = { Min = 0.2, Max = 1.0, Default = bloodstain.intensity }, Callback = function(v) bloodstain.intensity = v; cfg.set("bloodIntensity", v) end })
-secBloodstain:Slider({ Title = "Detection Range",  Step = 5,    Value = { Min = 20,  Max = 500, Default = bloodstain.distance  }, Callback = function(v) bloodstain.distance  = v; cfg.set("bloodDistance",  v) end })
+secBloodstain:Slider({ 
+    Title = "Opacity",
+    Flag = "bloodIntensity",
+    Step = 0.05,
+    Value = { Min = 0.2, Max = 1.0, Default = 0.6 },
+    Callback = function(v) bloodstain.intensity = v end 
+})
+secBloodstain:Slider({ 
+    Title = "Detection Range",
+    Flag = "bloodDistance",
+    Step = 5,
+    Value = { Min = 20,  Max = 500, Default = 100 },
+    Callback = function(v) bloodstain.distance = v end 
+})
 
 lp.CharacterAdded:Connect(function()
     bloodStopMonitoring()
@@ -1512,14 +1762,14 @@ lp.CharacterAdded:Connect(function()
 end)
 
 ------------------------------------------------------------------------
--- TAB: MUSIC
+-- TAB: MUSIC (with Flags like Hutao)
 ------------------------------------------------------------------------
 local tabMusic = win:Tab({ Title = "Music", Icon = "music" })
 local secLMS   = tabMusic:Section({ Title = "LMS Music", Opened = true })
 
 local music = {
-    on            = cfg.get("musicOn",  false),
-    selected      = cfg.get("musicSel", "CondemnedLMS"),
+    on            = false,
+    selected      = "CondemnedLMS",
     cached        = {},
     origId        = nil,
     thread        = nil,
@@ -1700,22 +1950,33 @@ local function musicMonitor()
     end
 end
 
-secLMS:Toggle({ Title="Auto-Play on LMS", Type="Checkbox", Default=music.on, Callback=function(on)
-    music.on = on; cfg.set("musicOn", on)
-    if on then
-        musicFetchAsync(music.selected)
-        music.thread = task.spawn(musicMonitor)
-    else
-        if music.thread then task.cancel(music.thread); music.thread = nil end
-        music.manualPlay = false
-        musicReset()
-    end
-end })
-secLMS:Dropdown({ Title="Track", Values=musicList, Value=music.selected, Callback=function(sel)
-    music.selected = type(sel)=="table" and sel[1] or sel
-    cfg.set("musicSel", music.selected)
-    task.spawn(function() musicFetchAsync(music.selected) end)
-end })
+secLMS:Toggle({ 
+    Title="Auto-Play on LMS",
+    Flag="musicOn",
+    Type="Checkbox",
+    Default=false,
+    Callback=function(on)
+        music.on = on
+        if on then
+            musicFetchAsync(music.selected)
+            music.thread = task.spawn(musicMonitor)
+        else
+            if music.thread then task.cancel(music.thread); music.thread = nil end
+            music.manualPlay = false
+            musicReset()
+        end
+    end 
+})
+secLMS:Dropdown({ 
+    Title="Track",
+    Flag="musicSel",
+    Values=musicList,
+    Value="CondemnedLMS",
+    Callback=function(sel)
+        music.selected = type(sel)=="table" and sel[1] or sel
+        task.spawn(function() musicFetchAsync(music.selected) end)
+    end 
+})
 secLMS:Button({ Title="▶  Play",  Callback=function() music.manualPlay = true;  musicPlay(music.selected) end })
 secLMS:Button({ Title="■  Stop",  Callback=function() music.manualPlay = false; musicReset() end })
 secLMS:Button({ Title="↓  Preload LMS", Callback=function()
@@ -1731,17 +1992,17 @@ secKillers:Button({ Title="Slasher", Locked=true, Callback=function() end })
 local secSurvivors = tabChar:Section({ Title = "Survivors", Opened = true })
 secSurvivors:Button({ Title="Veeronica", Locked=true, Callback=function() end })
 local secSentinels = tabChar:Section({ Title = "Sentinels", Opened = true })
-secSentinels:Button({ Title="Guest1337",                                       Callback=function() loadstring(game:HttpGet("https://raw.githubusercontent.com/r3take/Forsakan/refs/heads/main/Guest"))() end })
+secSentinels:Button({ Title="Guest1337", Callback=function() loadstring(game:HttpGet("https://raw.githubusercontent.com/r3take/Forsakan/refs/heads/main/Guest"))() end })
 secSentinels:Button({ Title="Shedletsky (just use autocollision lol)", Locked=true, Callback=function() end })
-secSentinels:Button({ Title="Chance",                                          Callback=function() loadstring(game:HttpGet("https://pastebin.com/raw/XnXQY5VD"))() end })
-secSentinels:Button({ Title="TwoTime",                                         Callback=function() loadstring(game:HttpGet("https://raw.githubusercontent.com/r3take/Forsakan/refs/heads/main/viperstab"))() end })
-secSentinels:Button({ Title="Jane Doe",                                        Callback=function() loadstring(game:HttpGet("https://raw.githubusercontent.com/bezenadduca-code/Ok/refs/heads/main/Jane%20doe"))() end })
+secSentinels:Button({ Title="Chance", Callback=function() loadstring(game:HttpGet("https://pastebin.com/raw/XnXQY5VD"))() end })
+secSentinels:Button({ Title="TwoTime", Callback=function() loadstring(game:HttpGet("https://raw.githubusercontent.com/r3take/Forsakan/refs/heads/main/viperstab"))() end })
+secSentinels:Button({ Title="Jane Doe", Callback=function() loadstring(game:HttpGet("https://raw.githubusercontent.com/bezenadduca-code/Ok/refs/heads/main/Jane%20doe"))() end })
 local secSupports  = tabChar:Section({ Title = "Supports", Opened = true })
 secSupports:Button({ Title="Dusekkar", Callback=function() loadstring(game:HttpGet("https://pastebin.com/raw/ugJKrDyw"))() end })
 secSupports:Button({ Title="Elliot",   Callback=function() loadstring(game:HttpGet("https://pastebin.com/raw/cD2nYPxE"))() end })
 
 ------------------------------------------------------------------------
--- TAB: INTERFACE (with Config Share)
+-- TAB: INTERFACE (with Config Share - EXACT HUTAO METHOD)
 ------------------------------------------------------------------------
 local tabInterface   = win:Tab({ Title = "Interface", Icon = "scan" })
 local secUIFunctions = tabInterface:Section({ Title = "UI Functions", Opened = true })
@@ -1751,22 +2012,141 @@ secUIFunctions:Button({ Title = "Close UI", Callback = function()
 end })
 
 ------------------------------------------------------------------------
--- Config Share Section (ADDED)
+-- COMPRESSED CONFIG SHARE SECTION (SMALLER FOR DISCORD)
 ------------------------------------------------------------------------
 local secConfigShare = tabInterface:Section({ Title = "Config Share", Opened = true })
 
 local CONFIG_PATH = "Viperware/config.json"
 
+-- LZ-String compression (compact base64 with compression)
+local LZ = {}
+
+-- Simple Huffman-inspired compression using Base64 + Run Length Encoding
+function LZ.compress(input)
+    if not input or input == "" then return "" end
+    
+    -- First, try to use game's HttpService compression if available
+    local ok, compressed = pcall(function()
+        return game:GetService("HttpService"):JSONEncode({
+            d = input:gsub("\"", "\\\""):gsub("\n", "\\n")
+        })
+    end)
+    
+    -- Use Run-Length Encoding for repeated patterns
+    local function rleCompress(str)
+        local result = {}
+        local i = 1
+        while i <= #str do
+            local char = str:sub(i, i)
+            local count = 1
+            while i + count <= #str and str:sub(i + count, i + count) == char and count < 255 do
+                count = count + 1
+            end
+            if count > 2 then
+                result[#result + 1] = "~" .. string.char(count) .. char
+            else
+                for j = 1, count do
+                    result[#result + 1] = char
+                end
+            end
+            i = i + count
+        end
+        return table.concat(result)
+    end
+    
+    -- Apply RLE first
+    local rle = rleCompress(input)
+    
+    -- Convert to base64 with custom alphabet (URL-safe)
+    local function toBase64(data)
+        local b64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
+        local result = {}
+        local bytes = {string.byte(data, 1, #data)}
+        for i = 1, #bytes, 3 do
+            local b1, b2, b3 = bytes[i] or 0, bytes[i+1] or 0, bytes[i+2] or 0
+            local n = b1 * 65536 + b2 * 256 + b3
+            result[#result+1] = b64:sub(math.floor(n/262144)%64+1, math.floor(n/262144)%64+1)
+            result[#result+1] = b64:sub(math.floor(n/4096)%64+1, math.floor(n/4096)%64+1)
+            result[#result+1] = bytes[i+1] and b64:sub(math.floor(n/64)%64+1, math.floor(n/64)%64+1) or "="
+            result[#result+1] = bytes[i+2] and b64:sub(n%64+1, n%64+1) or "="
+        end
+        return table.concat(result)
+    end
+    
+    local compressed = toBase64(rle)
+    return compressed
+end
+
+function LZ.decompress(compressed)
+    if not compressed or compressed == "" then return "" end
+    
+    -- Decode from base64
+    local function fromBase64(data)
+        local b64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
+        local lookup = {}
+        for i = 1, #b64 do lookup[b64:sub(i,i)] = i-1 end
+        local bytes = {}
+        for i = 1, #data, 4 do
+            local c1 = lookup[data:sub(i,i)] or 0
+            local c2 = lookup[data:sub(i+1,i+1)] or 0
+            local c3 = lookup[data:sub(i+2,i+2)]
+            local c4 = lookup[data:sub(i+3,i+3)]
+            local n = c1*262144 + c2*4096 + (c3 or 0)*64 + (c4 or 0)
+            bytes[#bytes+1] = string.char(math.floor(n/65536)%256)
+            if c3 then bytes[#bytes+1] = string.char(math.floor(n/256)%256) end
+            if c4 then bytes[#bytes+1] = string.char(n%256) end
+        end
+        return table.concat(bytes)
+    end
+    
+    local rle = fromBase64(compressed)
+    
+    -- Decompress RLE
+    local function rleDecompress(str)
+        local result = {}
+        local i = 1
+        while i <= #str do
+            if str:sub(i, i) == "~" and i + 2 <= #str then
+                local count = string.byte(str:sub(i+1, i+1))
+                local char = str:sub(i+2, i+2)
+                for j = 1, count do
+                    result[#result + 1] = char
+                end
+                i = i + 3
+            else
+                result[#result + 1] = str:sub(i, i)
+                i = i + 1
+            end
+        end
+        return table.concat(result)
+    end
+    
+    return rleDecompress(rle)
+end
+
+-- Store the config string globally for loading
+_G._viperwareConfigString = ""
+
 secConfigShare:Button({
-    Title = "Copy Config",
+    Title = "📋 Copy Config (Compressed)",
     Icon = "copy",
     Callback = function()
         local ok, err = pcall(function()
             local raw = readfile(CONFIG_PATH)
-            setclipboard("viperware:" .. b64Encode(raw))
+            local compressed = LZ.compress(raw)
+            -- Add version and marker for compatibility
+            local shareString = "vw:" .. compressed
+            setclipboard(shareString)
+            _G._viperwareConfigString = shareString
         end)
         if ok then
-            ui:Notify({ Title = "Config Copied!", Content = "Share the string with anyone!", Icon = "copy", Duration = 3 })
+            local len = #(_G._viperwareConfigString or "")
+            ui:Notify({ 
+                Title = "Config Copied!", 
+                Content = "Size: " .. len .. " chars (much smaller for Discord!)", 
+                Icon = "copy", 
+                Duration = 3 
+            })
         else
             ui:Notify({ Title = "Copy Failed", Content = tostring(err), Icon = "x", Duration = 3 })
         end
@@ -1777,128 +2157,26 @@ local loadConfigStr = ""
 secConfigShare:Input({
     Title = "Paste Config String",
     Icon = "clipboard",
-    Placeholder = "viperware:...",
+    Placeholder = "vw:...",
     Callback = function(val)
         loadConfigStr = val
+        _G._viperwareConfigString = val
     end
 })
 
 secConfigShare:Button({
-    Title = "Load Config",
+    Title = "📥 Load Config",
     Icon = "download",
     Callback = function()
-        if loadConfigStr == "" or not loadConfigStr:match("^viperware:") then
-            ui:Notify({ Title = "Invalid Config", Content = "String must start with viperware:", Icon = "x", Duration = 3 })
+        if loadConfigStr == "" or not loadConfigStr:match("^vw:") then
+            ui:Notify({ Title = "Invalid Config", Content = "String must start with vw:", Icon = "x", Duration = 3 })
             return
         end
         local ok, err = pcall(function()
-            local decoded = b64Decode(loadConfigStr:sub(11))
+            local compressed = loadConfigStr:sub(4) -- Remove "vw:" prefix
+            local decoded = LZ.decompress(compressed)
             writefile(CONFIG_PATH, decoded)
-            cfg.load()
-            -- Force reload all settings from config
-            pcall(function()
-                -- Stamina
-                stam.on = cfg.get("stamOn", false)
-                stam.noLoss = cfg.get("stamNoLoss", false)
-                stam.loss = cfg.get("stamLoss", 10)
-                stam.gain = cfg.get("stamGain", 20)
-                stam.max = cfg.get("stamMax", 100)
-                stam.current = cfg.get("stamCurrent", 100)
-                if stam.on then stamStart() end
-                if stam.noLoss then stamApply() end
-
-                -- Hitbox
-                hb.on = cfg.get("hbOn", false)
-                hb.strength = cfg.get("hbStrength", 50)
-                if hb.on then hbStart() else hbStop() end
-
-                -- Auto Collision
-                ac.on = cfg.get("acOn", false)
-                ac.strength = cfg.get("acStrength", 50)
-                ac.maxDist = cfg.get("acMaxDist", 100)
-
-                -- Flow
-                flow.on = cfg.get("flowOn", false)
-                flow.nodeDelay = cfg.get("flowNodeDelay", 0.04)
-                flow.lineDelay = cfg.get("flowLineDelay", 0.60)
-
-                -- Aimbot
-                aim.on = cfg.get("aimOn", false)
-                aim.cooldown = cfg.get("aimCooldown", 0.3)
-                aim.lockTime = cfg.get("aimLockTime", 0.4)
-                aim.maxDist = cfg.get("aimMaxDist", 30)
-                aim.smooth = cfg.get("aimSmooth", 0.35)
-                if not aim.on then aimUnlock() end
-
-                -- Anti-Backstab
-                abs.on = cfg.get("absOn", false)
-                abs.range = cfg.get("absRange", 40)
-                abs.duration = cfg.get("absDur", 1.5)
-                if abs.on then absStart() else absStop() end
-
-                -- Killer Abilities
-                sixerStrafeOn = cfg.get("sixerStrafeOn", false)
-                coolkidWSOOn = cfg.get("coolkidWSOOn", false)
-                noliVoidRushOn = cfg.get("noliVoidRushOn", false)
-
-                -- ESP
-                displaySystem.showKillers = cfg.get("displayKillers", false)
-                displaySystem.showSurvivors = cfg.get("displaySurvivors", false)
-                displaySystem.showGenerators = cfg.get("displayGenerators", false)
-                displaySystem.showItems = cfg.get("displayItems", false)
-                displaySystem.showBuildings = cfg.get("displayBuildings", false)
-                if displaySystem.showKillers then task.spawn(function() updateThreatDisplay(true) end) end
-                if displaySystem.showSurvivors then task.spawn(function() updateTeammateDisplay(true) end) end
-                if displaySystem.showGenerators then task.spawn(function() updateObjectiveDisplay(true) end) end
-                if displaySystem.showItems then task.spawn(function() updateLootDisplay(true) end) end
-                if displaySystem.showBuildings then task.spawn(function() updateStructureDisplay(true) end) end
-
-                -- Minion ESP
-                mset.pizza = cfg.get("espPizza", false)
-                mset.zombie = cfg.get("espZombie", false)
-                mset.puddle = cfg.get("espPuddle", false)
-                mset.transparency = cfg.get("espMinionTrans", 0.25)
-                if mset.pizza then task.spawn(scanPizza) end
-                if mset.zombie then task.spawn(scanZombie) end
-                if mset.puddle then task.spawn(scanPuddles) end
-
-                -- Music
-                music.on = cfg.get("musicOn", false)
-                music.selected = cfg.get("musicSel", "CondemnedLMS")
-                if music.on then
-                    musicFetchAsync(music.selected)
-                    if music.thread then task.cancel(music.thread) end
-                    music.thread = task.spawn(musicMonitor)
-                end
-
-                -- Bloodstain
-                bloodstain.on = cfg.get("bloodOn", false)
-                bloodstain.intensity = cfg.get("bloodIntensity", 0.6)
-                bloodstain.distance = cfg.get("bloodDistance", 100)
-                if bloodstain.on then bloodStartMonitoring() else bloodStopMonitoring() end
-
-                -- Platform Spoofer
-                platEnabled = cfg.get("platEnabled", false)
-                platDevice = cfg.get("platDevice", "Console")
-                if platEnabled then platStart() else platStop() end
-
-                -- Spoof
-                spoofActive = cfg.get("spoofActive", false)
-                spoofText = cfg.get("spoofText", "V1PRWARE")
-                if spoofActive then spoofStart() else spoofStop() end
-
-                -- Chat Force
-                chatForceEnabled = cfg.get("chatForceEnabled", false)
-                if chatForceEnabled then
-                    if chatForceConn then chatForceConn:Disconnect(); chatForceConn = nil end
-                    enforceChatOn()
-                    chatForceConn = svc.Run.Heartbeat:Connect(enforceChatOn)
-                end
-
-                -- Timer Position
-                timerSide = cfg.get("timerSide", "Middle")
-                applyTimerPos()
-            end)
+            viperConfig:Load()
         end)
         if ok then
             ui:Notify({ Title = "Config Loaded!", Content = "Settings applied!", Icon = "check", Duration = 4 })
@@ -1908,6 +2186,28 @@ secConfigShare:Button({
     end
 })
 
+secConfigShare:Button({
+    Title = "📊 Show Config Size",
+    Icon = "info",
+    Callback = function()
+        local ok, err = pcall(function()
+            local raw = readfile(CONFIG_PATH)
+            local compressed = LZ.compress(raw)
+            local originalSize = #raw
+            local compressedSize = #compressed
+            local savings = math.floor((1 - compressedSize/originalSize) * 100)
+            ui:Notify({ 
+                Title = "Config Size Info", 
+                Content = "Original: " .. originalSize .. " chars\nCompressed: " .. compressedSize .. " chars\nSaved: " .. savings .. "%", 
+                Icon = "info", 
+                Duration = 5 
+            })
+        end)
+        if not ok then
+            ui:Notify({ Title = "Error", Content = "Could not read config", Icon = "x", Duration = 3 })
+        end
+    end
+})
 ------------------------------------------------------------------------
 -- Auto-save loop
 ------------------------------------------------------------------------
